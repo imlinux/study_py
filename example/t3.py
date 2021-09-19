@@ -54,8 +54,8 @@ def split_image(name, save_path):
     cv2.imwrite('cell.jpg', binary)
 
     rows, cols = binary.shape
-    print('rows', rows)
-    print('cols', cols)
+    print(f'{rows=}, {cols=}')
+
     # 原理：这个参数决定了 横线或者竖线的长度
     scale = 20  # 调节是否能精确识别点（粗、模糊 +   细、清晰  -）
     # 识别横线
@@ -68,13 +68,13 @@ def split_image(name, save_path):
     如果都为1，结果图像的该像素为1；否则为0.
     """
     # 矩形
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 1))  # 用长为 cols//scale ，宽为1 的矩形扫描，能够得到横线
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (50, 1))  # 用长为 cols//scale ，宽为1 的矩形扫描，能够得到横线
     eroded = cv2.erode(binary, kernel, iterations=1)  # 腐蚀
     dilatedcol = cv2.dilate(eroded, kernel, iterations=1)  # 膨胀
     cv2.imwrite('dilated1.jpg', dilatedcol)
 
     # 识别竖线
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 25))  # 用长为1， 宽为rows//scale 的矩形扫描，能够得到竖线
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 50))  # 用长为1， 宽为rows//scale 的矩形扫描，能够得到竖线
     eroded = cv2.erode(binary, kernel, iterations=1)
     dilatedrow = cv2.dilate(eroded, kernel, iterations=1)
     cv2.imwrite('dilated2.jpg', dilatedrow)
@@ -127,8 +127,7 @@ def split_image(name, save_path):
     for i in range(len(myys)):
         for m in mylisty:
             for n in mylistx:
-                if abs(m - ys[i]) < params_dot_margin and abs(n - xs[i]) < params_dot_margin and (
-                m, n) not in data_list:
+                if abs(m - ys[i]) < params_dot_margin and abs(n - xs[i]) < params_dot_margin and (m, n) not in data_list:
                     data_list.append((m, n))
 
         # print('@@@@@@@@@@@@', (ys[i], xs[i]))
@@ -202,4 +201,4 @@ if __name__ == '__main__':
     #     else:
     #         split_image(img_path + i, save_path)
 
-    split_image('/home/dong/tmp/table.png', 'small_images')
+    split_image('/home/dong/tmp/tmp.jpg', 'small_images')
