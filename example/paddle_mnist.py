@@ -3,34 +3,40 @@ import numpy as np
 import paddle
 import paddle.nn.functional as F
 from paddle.nn import Conv2D, MaxPool2D, Linear
-from paddle.vision.datasets import MNIST
 from paddle.vision.transforms import ToTensor
 import os
 
 
+def load_and_preprocess(img_path):
+    img = cv2.imread(img_path, 0)
+    img = cv2.resize(img, [28, 28])
+    _, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return img
+
+
 class MyDataset(paddle.io.Dataset):
 
-    def __init__(self, mode = "train", transform = None):
+    def __init__(self, mode="train", transform=None):
         super().__init__()
         self.data = []
         self.transform = transform
         with open(f"/home/dong/tmp/mnist/{mode}.txt") as f:
             for i in f:
-                (img, label) = i.replace("\n", "").split(" ")
-                img_data = cv2.imread(img, 0)
-
-                self.data.append((img_data, np.array([label]).astype('int64')))
+                (img_path, label) = i.replace("\n", "").split(" ")
+                self.data.append((img_path, label))
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, item):
 
-        image, label = self.data[item]
-        if self.transform is not None:
-            image = self.transform(image)
+        img_path, label = self.data[item]
+        img = load_and_preprocess(img_path)
 
-        return image, label
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return img, np.array([label]).astype('int64')
 
 
 # 定义 LeNet 网络结构
@@ -72,13 +78,13 @@ class LeNet(paddle.nn.Layer):
 
 
 # 定义训练过程
-def train(model, opt, train_loader, valid_loader):
+def train(model, opt, train_loader, valid_loader, epoch_num):
     # 开启0号GPU训练
     use_gpu = False
     paddle.set_device('gpu:0') if use_gpu else paddle.set_device('cpu')
     print('start training ... ')
     model.train()
-    for epoch in range(EPOCH_NUM):
+    for epoch in range(epoch_num):
         for batch_id, data in enumerate(train_loader()):
             img = data[0]
             label = data[1]
@@ -117,33 +123,35 @@ def train(model, opt, train_loader, valid_loader):
     paddle.save(model.state_dict(), 'mnist.pdparams')
 
 
-# 创建模型
-model = LeNet(num_classes=10)
-# # 设置迭代轮数
-EPOCH_NUM = 5
+def main():
+    # 创建模型
+    model = LeNet(num_classes=10)
+    # # 设置迭代轮数
+    EPOCH_NUM = 5
 
-if os.path.exists("mnist.pdparams"):
+    if os.path.exists("mnist.pdparams"):
 
-    param_dict = paddle.load("mnist.pdparams")
-    model.load_dict(param_dict)
-else:
-    # 设置优化器为Momentum，学习率为0.001
-    opt = paddle.optimizer.Momentum(learning_rate=0.001, momentum=0.9, parameters=model.parameters())
-    # 定义数据读取器
-    train_loader = paddle.io.DataLoader(MyDataset(mode='train', transform=ToTensor()), batch_size=10, shuffle=True)
-    valid_loader = paddle.io.DataLoader(MyDataset(mode='test', transform=ToTensor()), batch_size=10)
-    # 启动训练过程
-    train(model, opt, train_loader, valid_loader)
+        param_dict = paddle.load("mnist.pdparams")
+        model.load_dict(param_dict)
+    else:
+        # 设置优化器为Momentum，学习率为0.001
+        opt = paddle.optimizer.Momentum(learning_rate=0.001, momentum=0.9, parameters=model.parameters())
+        # 定义数据读取器
+        train_loader = paddle.io.DataLoader(MyDataset(mode='train', transform=ToTensor()), batch_size=10, shuffle=True)
+        valid_loader = paddle.io.DataLoader(MyDataset(mode='test', transform=ToTensor()), batch_size=10)
+        # 启动训练过程
+        train(model, opt, train_loader, valid_loader, EPOCH_NUM)
 
-model.eval()
-img = cv2.imread("/home/dong/tmp/2021-09-20_15-46.png", 0)
-img = cv2.resize(img, [28, 28])
-_, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-cv2.imshow("", img)
-cv2.waitKey(0)
+    model.eval()
+    img = load_and_preprocess("/home/dong/tmp/2021-09-20_01-07.png", 0)
+    cv2.imshow("", img)
+    cv2.waitKey(0)
 
-img = ToTensor()(img)
-img = img.reshape([1, 1, 28, 28])
-pred = F.softmax(model(img))
-print(pred)
-print(paddle.argmax(pred))
+    img = ToTensor()(img)
+    img = img.reshape([1, 1, 28, 28])
+    pred = F.softmax(model(img))
+    print(pred)
+    print(paddle.argmax(pred))
+
+if __name__ == '__main__':
+    main()
