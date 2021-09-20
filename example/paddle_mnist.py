@@ -5,6 +5,7 @@ import paddle.nn.functional as F
 from paddle.nn import Conv2D, MaxPool2D, Linear
 from paddle.vision.datasets import MNIST
 from paddle.vision.transforms import ToTensor
+import os
 
 
 class MyDataset(paddle.io.Dataset):
@@ -120,26 +121,29 @@ def train(model, opt, train_loader, valid_loader):
 model = LeNet(num_classes=10)
 # # 设置迭代轮数
 EPOCH_NUM = 5
-# 设置优化器为Momentum，学习率为0.001
-opt = paddle.optimizer.Momentum(learning_rate=0.001, momentum=0.9, parameters=model.parameters())
-# 定义数据读取器
-train_loader = paddle.io.DataLoader(MyDataset(mode='train', transform=ToTensor()), batch_size=10, shuffle=True)
-valid_loader = paddle.io.DataLoader(MyDataset(mode='test', transform=ToTensor()), batch_size=10)
-# 启动训练过程
-train(model, opt, train_loader, valid_loader)
 
-# param_dict = paddle.load("mnist.pdparams")
-# model.load_dict(param_dict)
-# model.eval()
+if os.path.exists("mnist.pdparams"):
 
-# img = cv2.imread("/home/dong/tmp/2021-09-20_01-08.png", 0)
-# img = cv2.resize(img, [28, 28])
-# _, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-# cv2.imshow("", img)
-# cv2.waitKey(0)
-#
-# img = ToTensor()(img)
-# img = img.reshape([1, 1, 28, 28])
-# pred = F.softmax(model(img))
-# print(pred)
-# print(paddle.argmax(pred))
+    param_dict = paddle.load("mnist.pdparams")
+    model.load_dict(param_dict)
+else:
+    # 设置优化器为Momentum，学习率为0.001
+    opt = paddle.optimizer.Momentum(learning_rate=0.001, momentum=0.9, parameters=model.parameters())
+    # 定义数据读取器
+    train_loader = paddle.io.DataLoader(MyDataset(mode='train', transform=ToTensor()), batch_size=10, shuffle=True)
+    valid_loader = paddle.io.DataLoader(MyDataset(mode='test', transform=ToTensor()), batch_size=10)
+    # 启动训练过程
+    train(model, opt, train_loader, valid_loader)
+
+model.eval()
+img = cv2.imread("/home/dong/tmp/2021-09-20_15-46.png", 0)
+img = cv2.resize(img, [28, 28])
+_, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+cv2.imshow("", img)
+cv2.waitKey(0)
+
+img = ToTensor()(img)
+img = img.reshape([1, 1, 28, 28])
+pred = F.softmax(model(img))
+print(pred)
+print(paddle.argmax(pred))
