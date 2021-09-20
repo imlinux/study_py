@@ -127,7 +127,7 @@ def main():
     # 创建模型
     model = LeNet(num_classes=10)
     # # 设置迭代轮数
-    EPOCH_NUM = 5
+    EPOCH_NUM = 10
 
     if os.path.exists("mnist.pdparams"):
 
@@ -143,15 +143,16 @@ def main():
         train(model, opt, train_loader, valid_loader, EPOCH_NUM)
 
     model.eval()
-    img = load_and_preprocess("/home/dong/tmp/2021-09-20_01-07.png", 0)
-    cv2.imshow("", img)
-    cv2.waitKey(0)
+    img = load_and_preprocess("/home/dong/tmp/no/5/2021-09-20_17-04_4.png")
+    # cv2.imshow("", img)
+    # cv2.waitKey(0)
 
     img = ToTensor()(img)
     img = img.reshape([1, 1, 28, 28])
     pred = F.softmax(model(img))
     print(pred)
     print(paddle.argmax(pred))
+
 
 if __name__ == '__main__':
     main()
