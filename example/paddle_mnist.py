@@ -5,11 +5,13 @@ import paddle.nn.functional as F
 from paddle.nn import Conv2D, MaxPool2D, Linear
 from paddle.vision.transforms import ToTensor
 import os
+import paddle.vision.models.lenet
 
 
 def load_and_preprocess(img_path):
     img = cv2.imread(img_path, 0)
     img = cv2.resize(img, [28, 28])
+    img = ~img
     _, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     return img
 
@@ -124,8 +126,8 @@ def main():
 
     model.eval()
     img = load_and_preprocess("/home/dong/tmp/2021-09-14_18-09.png")
-    # cv2.imshow("", img)
-    # cv2.waitKey(0)
+    cv2.imshow("", img)
+    cv2.waitKey(0)
 
     img = ToTensor()(img)
     img = img.reshape([1, 1, 28, 28])
