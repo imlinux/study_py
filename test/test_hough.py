@@ -23,13 +23,13 @@ def rotate(image, angle, center=None, scale=1.0):
 
 
 def main():
-    img = cv2.imread("/home/dong/Downloads/gaitubao_table_10.png", cv2.IMREAD_GRAYSCALE)
-    img1 = cv2.imread("/home/dong/Downloads/gaitubao_table_10.png", cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread("/home/dong/Downloads/gaitubao_table_1.png", cv2.IMREAD_GRAYSCALE)
 
     edges = cv2.Canny(img, 50, 150, apertureSize=3)
 
     lines = cv2.HoughLines(edges, 1, np.pi / 180, 360)
     for line in lines:
+        print(line)
         rho, theta = line[0]
         a = np.cos(theta)
         b = np.sin(theta)
@@ -42,8 +42,8 @@ def main():
         cv2.line(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
         print(f'{rho=},{theta=}', {degree(theta)})
 
-    img1 = rotate(img1, 10)
-    cv2.imshow("", img1)
+    img = rotate(img, 2)
+    cv2.imshow("", img)
     cv2.waitKey(0)
 
 

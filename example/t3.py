@@ -201,4 +201,4 @@ if __name__ == '__main__':
     #     else:
     #         split_image(img_path + i, save_path)
 
-    split_image('/home/dong/tmp/tmp.jpg', 'small_images')
+    split_image('/home/dong/tmp/table.png', 'small_images')
