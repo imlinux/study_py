@@ -14,6 +14,7 @@ columns = [(266, 512), (512, 864), (994, 1160), (1160, 1316), (1472, 1644), (164
 first_row = 565
 for i in range(25):
     row = first_row + i * h
-    for column in columns:
-        cv2.imshow(str(i), img[row: row + h, column[0]: column[1]])
-        cv2.waitKey(0)
+    for j, column in enumerate(columns):
+        cv2.imwrite(f"/home/dong/tmp/xx/{i}-{j}.jpg", img[row: row + h, column[0]: column[1]])
+        # cv2.imshow(str(i), img[row: row + h, column[0]: column[1]])
+        # cv2.waitKey(0)
