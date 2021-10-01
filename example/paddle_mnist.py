@@ -10,7 +10,7 @@ import paddle.vision.models.lenet
 
 def load_and_preprocess(img_path):
     img = cv2.imread(img_path, 0)
-    img = cv2.resize(img, [28, 28])
+    img = cv2.resize(img, (28, 28))
     img = ~img
     _, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     return img
@@ -125,7 +125,7 @@ def main():
         train(model, opt, train_loader, valid_loader, EPOCH_NUM)
 
     model.eval()
-    img = load_and_preprocess("/home/dong/tmp/2021-09-14_18-09.png")
+    img = load_and_preprocess("/home/dong/tmp/2021-10-01_10-19.png")
     cv2.imshow("", img)
     cv2.waitKey(0)
 

@@ -51,18 +51,24 @@ def main():
 
     index_array = np.where(bitwise_and > 0)
 
+    d = np.column_stack((index_array[1], index_array[0]))
+
+    for i in d:
+        print(i)
+
+    # for i in split_to_row(index_array):
+    #     print(i)
+
     # print(np.where(dilate_col > 0))
     #
     # for index, i in enumerate(split_row_to_cell(split_to_row(index_array))):
     #     print(i)
     #     cv2.imwrite(f"/home/dong/tmp/save{index}.png", img[i[0][1]: i[2][1], i[0][0]: i[1][0]])
-
-    cv2.imshow("dilate_row", dilate_row)
-    cv2.imshow("dilate_col", dilate_col)
-    cv2.imshow("bitwise_and", bitwise_and)
-    cv2.imshow("img", img)
-
-    cv2.waitKey()
+    #
+    cv2.imwrite("dilate_row.jpg", dilate_row)
+    cv2.imwrite("dilate_col.jpg", dilate_col)
+    cv2.imwrite("bitwise_and.jpg", bitwise_and)
+    cv2.imwrite("img.jpg", img)
 
 
 
