@@ -27,6 +27,6 @@ def split(img_path, output):
         cv2.imwrite(f"{output}/{filename}-{row}-{i}.jpg", img[row: row + h, col + i * w: col + (i + 1) * w])
 
 
-# split("/home/dong/tmp/zuowen/img/0/JUYE_F_00007.pdf-7.jpg", "/home/dong/tmp/dataset/voc/zuowen")
+# split("/home/dong/tmp/zuowen/img/0/JUYE_F_00007.pdf-17.jpg", "/home/dong/tmp/dataset/voc/zuowen")
 for f in pathlib.Path("/home/dong/tmp/zuowen/img/0").iterdir():
     split(str(f), "/home/dong/tmp/dataset/voc/zuowen")
