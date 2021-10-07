@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import pathlib
+import imutils
+from imutils import perspective
 
 
 def degree(theta):
@@ -12,7 +14,7 @@ def rotate(image, angle, center=None, scale=1.0):
     (h, w) = image.shape[:2]
 
     if center is None:
-        center = (w / 2, h / 2)
+        center = (w , h )
 
     M = cv2.getRotationMatrix2D(center, angle, scale)
     rotated = cv2.warpAffine(image, M, (w, h))
@@ -67,5 +69,24 @@ def main():
         cv2.imwrite("/home/dong/tmp/tmp.jpg", img)
 
 
+def main1():
+    img = cv2.imread("/home/dong/Downloads/gaitubao_JUYE_F_00007.pdf-1_10.jpg")
+    img = rotate(img, 10)
+    cv2.imwrite("/home/dong/tmp/tmp.jpg", img)
+
+
+def main2():
+    img = cv2.imread("/home/dong/Downloads/gaitubao_JUYE_F_00007.pdf-1_10.jpg")
+    rotated = imutils.rotate(img, angle=10)
+    cv2.imwrite("/home/dong/tmp/tmp.jpg", rotated)
+
+
+def main3():
+    img = cv2.imread("/home/dong/tmp/zuowen/img/0/JUYE_F_00019.pdf-81.jpg")
+    pts = np.array([(268, 278), (2377, 318), (203, 3355), (2315, 3382)])
+    img = imutils.perspective.four_point_transform(img, pts)
+    cv2.imwrite("/home/dong/tmp/tmp.jpg", img)
+
+
 if __name__ == "__main__":
-    main()
+    main3()

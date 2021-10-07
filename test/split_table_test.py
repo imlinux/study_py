@@ -33,7 +33,7 @@ def split_row_to_cell(row):
 
 
 def main():
-    img = cv2.imread("/home/dong/tmp/SHENJIANG_F_00028.pdf/0.jpg", cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread("/home/dong/tmp/zuowen/img/0/JUYE_F_00007.pdf-1.jpg", cv2.IMREAD_GRAYSCALE)
     _, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     img = ~img
 

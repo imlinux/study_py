@@ -1,69 +1,113 @@
-import cv2
+from os import read
+
+from pymongo import MongoClient
+from urllib.parse import quote_plus
 import fitz
-import numpy as np
+from bson.json_util import loads
 
 
-def order_points(pts):
-    rect = np.zeros((4, 2), dtype="float32")
-    s = pts.sum(axis=1)
-    rect[0] = pts[np.argmin(s)]
-    rect[2] = pts[np.argmax(s)]
-    diff = np.diff(pts, axis=1)
-    rect[1] = pts[np.argmin(diff)]
-    rect[3] = pts[np.argmax(diff)]
-    return rect
+def db():
+    uri = "mongodb://%s:%s@%s:%s" % (quote_plus("admin"), quote_plus("1q2w3e4r5t~!@#$%"), "127.0.0.1", "57017")
+    client = MongoClient(uri)
+    db = client["sigmai"]
 
+    print(db.user.find_one())
 
-def four_point_transform(image, pts):
-    rect = order_points(pts)
-    (tl, tr, br, bl) = rect
-    widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
-    widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
-    maxWidth = max(int(widthA), int(widthB))
-    heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
-    heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
-    maxHeight = max(int(heightA), int(heightB))
-    dst = np.array([
-        [0, 0],
-        [maxWidth - 1, 0],
-        [maxWidth - 1, maxHeight - 1],
-        [0, maxHeight - 1]], dtype="float32")
-    # compute the perspective transform matrix and then apply it
-    M = cv2.getPerspectiveTransform(rect, dst)
-    warped = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
-    # return the warped image
-    return warped
+def pdf():
+    pdf_file = fitz.open("/home/dong/tmp/zuowen/JUYE_F_00007.pdf")
 
+    for page_num in range(1, len(pdf_file), 2):
+        pdf_doc = fitz.Document()
+        pdf_doc.insert_pdf(pdf_file, from_page=page_num - 1, to_page=page_num)
+        pdf_doc.save("/home/dong/tmp/tmp.pdf")
+        break
 
-def preprocess(ori_img):
-    # 1. edge detection
-    tmp = ori_img.copy()
-    gray = cv2.cvtColor(tmp, cv2.COLOR_BGR2GRAY)
-    gray = cv2.GaussianBlur(gray, (5, 5), 0)
+uri = "mongodb://%s:%s@%s:%s" % (quote_plus("admin"), quote_plus("1q2w3e4r5t~!@#$%"), "127.0.0.1", "57017")
+client = MongoClient(uri)
+db = client["sigmai"]
 
-    edged = cv2.Canny(gray, 75, 200)
+pipeline = '''
+    [
+        {
+            "$match": {
+                "clazz": "5ea43fc7ebf5f3a540e44f7d",
+                "status": {
+                    "$in": ["在籍在读", "借读"]
+                }
+            }
+        },
+        {
+            "$addFields": {
+                "sortNo": {
+                    "$toInt": {
+                        "$cond": {
+                            "if": {
+                                "$eq": ["", { "$ifNull": ["$no", ""] }]
+                            },
+                            "then": "1000000",
+                            "else": "$no"
+                        }
+                    }
+                },
+                "clazzId": {
+                    "$toObjectId": "$clazz"
+                }
+            }
+        },
+    
+        {
+            "$lookup": {
+                "from": "clazz",
+                "foreignField": "_id",
+                "localField": "clazzId",
+                "as": "clazz"
+            }
+        },
+        
+        {
+            "$unwind": "$clazz"
+        },
+        {
+            "$sort": {
+                "sortNo": 1
+            }
+        },
+        {
+            "$project": {
+                "name": 1,
+                "school": "$clazz.school",
+                "schoolabbr": "$clazz.schoolabbr",
+                "clazzId": "$clazz._id",
+                "clazzName": "$clazz.name",
+                "clazzNameabbr": "$clazz.nameabbr",
+                "grade": "$clazz.grade",
+                "startyear": "$clazz.startyear"
+            }
+        }
+    ]
+'''
 
-    cnts, hierarchy = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[5:7]
+# data = db.user.aggregate(loads(pipeline))
+# for row in data:
+#     print(row)
 
-    screenCnt = None
-    for c in cnts:
-        peri = cv2.arcLength(c, True)
-        approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-        if len(approx) == 4:
-            screenCnt = approx
-            break
-    if screenCnt is not None:
-        cv2.drawContours(tmp, [screenCnt], -1, (0, 255, 0), 2)
-        warped = four_point_transform(ori_img, screenCnt.reshape(4, 2))
-        return warped, tmp
-    else:
-        raise RuntimeError("没有可见清晰边缘，透视变换失败")
+img = open("/home/dong/tmp/2021-10-03_14-44.png", "rb").read()
+doc = fitz.open("/home/dong/tmp/zuowen/JUYE_F_00007.pdf")
 
+print(doc.xref_object(6))
+f = open("/home/dong/tmp/zuowen/img/0/JUYE_F_00007.pdf-1.jpg", "rb")
 
-img = cv2.imread("/home/dong/tmp/zuowen/img/0/JUYE_F_00018.pdf-9.jpg")
+with open("/home/dong/tmp/xx", "wb") as wf:
+    wf.write(doc.xref_stream(6))
 
-img, _ = preprocess(img)
+#doc.update_stream(6, f.read(), 0)
+rect = doc[0].bound()
+doc.delete_page(0)
+*_, width, height = rect
+new_page = doc.new_page(0, width = width, height=height)
 
-cv2.imshow("", img)
-cv2.waitKey(0)
+new_page.insert_image(rect, stream=f.read())
+
+bytes = doc.tobytes()
+
+open("/home/dong/tmp/tmp.pdf", "wb").write(bytes)
