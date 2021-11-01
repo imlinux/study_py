@@ -30,7 +30,7 @@ img = cv2.cvtColor(img_raw, cv2.COLOR_BGR2GRAY)
 
 (thresh, img_bin) = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
-img_bin = 255-img
+img_bin = 255-img_bin
 
 kernel_length = np.array(img).shape[1]//40
 verticle_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, kernel_length))
