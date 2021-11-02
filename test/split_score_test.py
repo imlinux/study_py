@@ -1,29 +1,11 @@
 import cv2
 import numpy as np
+import os
 
+def sort_contours(cnts):
 
-def sort_contours(cnts, method="left-to-right"):
-    # initialize the reverse flag and sort index
-    reverse = False
-    i = 0
-
-    # handle if we need to sort in reverse
-    if method == "right-to-left" or method == "bottom-to-top":
-        reverse = True
-
-    # handle if we are sorting against the y-coordinate rather than
-    # the x-coordinate of the bounding box
-    if method == "top-to-bottom" or method == "bottom-to-top":
-        i = 1
-
-    # construct the list of bounding boxes and sort them from top to
-    # bottom
     boundingBoxes = [cv2.boundingRect(c) for c in cnts]
-    (cnts, boundingBoxes) = zip(*sorted(zip(cnts, boundingBoxes),
-                                        key=lambda b: b[1][i], reverse=reverse))
-
-    # return the list of sorted contours and bounding boxes
-    return (cnts, boundingBoxes)
+    return sorted(zip(cnts, boundingBoxes), key=lambda b: (b[1][1], b[1][0]), reverse=False)
 
 
 img_raw = cv2.imread("/home/dong/tmp/score/img/0/SHENJIANG_F_00028.pdf-3.jpg")
@@ -48,23 +30,20 @@ beta = 1.0 - alpha
 
 img_final_bin = cv2.addWeighted(verticle_lines_img, alpha, horizontal_lines_img, beta, 0.0)
 
-(thresh, img_final_bin) = cv2.threshold(img_final_bin, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+_, img_final_bin = cv2.threshold(img_final_bin, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
-contours, hierarchy = cv2.findContours(
-        img_final_bin, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-(contours, boundingBoxes) = sort_contours(contours, method="top-to-bottom")
-
+contours, hierarchy = cv2.findContours(img_final_bin, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
 idx = 0
-for c in contours:
-    # Returns the location and width,height for every contour
-    x, y, w, h = cv2.boundingRect(c)
+for c, b in sort_contours(contours):
 
-    # If the box height is greater then 20, widht is >80, then only save it as a box in "cropped/" folder.
+    x, y, w, h = b
+
     if 80 < w < 170 and 80 < h < 170:
         idx += 1
         new_img = img_raw[y:y + h, x:x + w]
+
+        os.makedirs("output", exist_ok=True)
         cv2.imwrite("output/" + str(idx) + '.png', new_img)
 
 cv2.imwrite("t.jpg", img_final_bin)
