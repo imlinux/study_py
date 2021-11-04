@@ -1,16 +1,37 @@
+import os
+
 import cv2
 import numpy as np
-import os
+from imutils import perspective
+
 from my_tools import extract_img_from_pdf
 
-def sort_contours(cnts):
 
+def sort_contours(cnts):
     boundingBoxes = [cv2.boundingRect(c) for c in cnts]
     return sorted(zip(cnts, boundingBoxes), key=lambda b: (b[1][1], b[1][0]), reverse=False)
 
 
-def split_img(img_raw):
+def edge_detection(image):
+    edge = cv2.Canny(image, 100, 200)
 
+    contours, _ = cv2.findContours(edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+
+    for c in contours:
+        ((x, y), (w, h), angle) = cv2.minAreaRect(c)
+        if 1000 < w and 1000 < h:
+            peri = cv2.arcLength(c, True)
+            approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+
+            if len(approx) == 4:
+                t = np.array(approx)
+                t = t.reshape(-1, 2)
+                return image, perspective.four_point_transform(image, t)
+
+    return image, image
+
+
+def split_img(img_raw):
     img_gray = cv2.cvtColor(img_raw, cv2.COLOR_BGR2GRAY)
 
     thresh, img_bin = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
@@ -25,7 +46,6 @@ def split_img(img_raw):
 
     horizontal_lines_img = cv2.morphologyEx(img_bin, cv2.MORPH_OPEN, hori_kernel, iterations=3)
     horizontal_lines_img = cv2.morphologyEx(horizontal_lines_img, cv2.MORPH_CLOSE, hori_kernel, iterations=100)
-
 
     alpha = 0.5
     beta = 1.0 - alpha
@@ -55,6 +75,8 @@ def split_img(img_raw):
     cv2.imwrite("horizontal_lines_img.jpg", horizontal_lines_img)
 
 
-imgs = extract_img_from_pdf("/home/dong/tmp/score/SHENJIANG_F_00032.pdf", 9)
-for img in imgs:
-    split_img(img)
+for img in extract_img_from_pdf("/home/dong/tmp/score/SHENJIANG_F_00032.pdf", 6):
+    img, table = edge_detection(img)
+
+    split_img(table)
+    break
