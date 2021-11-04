@@ -5,7 +5,10 @@ import numpy as np
 from imutils import perspective
 
 from my_tools import extract_img_from_pdf
+from paddleocr import PPStructure,draw_structure_result,save_structure_res
 
+
+table_engine = PPStructure(show_log=True, use_gpu=False)
 
 def sort_contours(cnts):
     boundingBoxes = [cv2.boundingRect(c) for c in cnts]
@@ -13,21 +16,25 @@ def sort_contours(cnts):
 
 
 def edge_detection(image):
-    edge = cv2.Canny(image, 100, 200)
-
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    edge = cv2.Canny(blur, 100, 200)
+    cv2.imwrite("t2.jpg", edge)
     contours, _ = cv2.findContours(edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
     for c in contours:
         ((x, y), (w, h), angle) = cv2.minAreaRect(c)
         if 1000 < w and 1000 < h:
+            cv2.imwrite("t4.jpg", cv2.drawContours(image.copy(), contours, -1, (0, 0, 255), 3))
             peri = cv2.arcLength(c, True)
             approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-
+            cv2.imwrite("t3.jpg", cv2.drawContours(image.copy(), [approx], -1, (0, 0, 255), 3))
             if len(approx) == 4:
                 t = np.array(approx)
                 t = t.reshape(-1, 2)
+                print("角度调整")
                 return image, perspective.four_point_transform(image, t)
-
+    print("角度保持不变")
     return image, image
 
 
@@ -75,8 +82,9 @@ def split_img(img_raw):
     cv2.imwrite("horizontal_lines_img.jpg", horizontal_lines_img)
 
 
-for img in extract_img_from_pdf("/home/dong/tmp/score/SHENJIANG_F_00032.pdf", 6):
+for img in extract_img_from_pdf("/home/dong/tmp/score/SHENJIANG_F_00032.pdf", 9):
+    result = table_engine(img)
+    img = result[0]["img"]
     img, table = edge_detection(img)
-
     split_img(table)
     break
