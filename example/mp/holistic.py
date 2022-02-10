@@ -1,9 +1,12 @@
 import cv2
 import mediapipe as mp
+import time
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_holistic = mp.solutions.holistic
 
+start = time.time_ns() // 1000000
+frame_cnt = 0
 
 cap = cv2.VideoCapture(0)
 with mp_holistic.Holistic(
@@ -22,8 +25,6 @@ with mp_holistic.Holistic(
     image.flags.writeable = False
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     results = holistic.process(image)
-
-    print(results._fields)
 
     # Draw landmark annotation on the image.
     image.flags.writeable = True
@@ -58,6 +59,14 @@ with mp_holistic.Holistic(
 
     # Flip the image horizontally for a selfie-view display.
     cv2.imshow('MediaPipe Holistic', cv2.flip(image, 1))
+
+    current = (time.time_ns() // 1000000)
+    frame_cnt += 1
+    if current - start >= 1000:
+        start = current
+        print(f"FPS={frame_cnt}")
+        frame_cnt = 0
+
     if cv2.waitKey(5) & 0xFF == 27:
       break
 cap.release()
