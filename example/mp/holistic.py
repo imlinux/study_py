@@ -57,6 +57,10 @@ with mp_holistic.Holistic(
         mp_drawing_styles.get_default_hand_landmarks_style(),
         mp_drawing_styles.get_default_hand_connections_style())
 
+    if results.right_hand_landmarks:
+        print("--------------------------")
+        print(results.right_hand_landmarks)
+        print("***************************")
     # Flip the image horizontally for a selfie-view display.
     cv2.imshow('MediaPipe Holistic', cv2.flip(image, 1))
 
